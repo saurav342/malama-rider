@@ -108,6 +108,8 @@ export default function BookingStep2() {
                             title="Back"
                             onPress={() => router.back()}
                             variant="outline"
+                            icon={<MaterialIcons name="arrow-back" size={18} color={Colors.textMainLight} />}
+                            iconPosition="left"
                             fullWidth={false}
                             style={styles.backBtn}
                         />
@@ -186,7 +188,7 @@ const styles = StyleSheet.create({
 
     sheetContent: {
         paddingHorizontal: Spacing.xl,
-        paddingTop: Spacing.md,
+        paddingTop: Spacing.xl,
         paddingBottom: Spacing.xxl,
     },
     titleSection: {

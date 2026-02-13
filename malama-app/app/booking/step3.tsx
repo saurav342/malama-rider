@@ -45,6 +45,7 @@ export default function BookingStep3() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [paymentId, setPaymentId] = useState<string | undefined>();
     const [tollOption, setTollOption] = useState<'without' | 'with'>('without');
+    const [paymentMode, setPaymentMode] = useState<'online' | 'cash'>('online');
 
     // ── Get fares for current service type ──
     const currentType = (params.serviceType === 'pickup' ? 'pickup' : 'drop') as 'drop' | 'pickup';
@@ -59,6 +60,17 @@ export default function BookingStep3() {
 
     const handlePayment = async () => {
         setPaymentLoading(true);
+
+        if (paymentMode === 'cash') {
+            // Simulate API call for cash booking
+            setTimeout(() => {
+                setPaymentLoading(false);
+                setPaymentId('CASH'); // Marker for cash payment
+                setShowSuccess(true);
+            }, 1500);
+            return;
+        }
+
         try {
             const result = await openPayment({
                 amount: payAmount,
@@ -346,7 +358,7 @@ export default function BookingStep3() {
                     style={styles.confirmBar}
                 >
                     <Button
-                        title={paymentLoading ? 'Processing...' : `Pay ₹${payAmount}`}
+                        title={paymentLoading ? 'Processing...' : (paymentMode === 'cash' ? 'Book Ride' : `Pay ₹${payAmount}`)}
                         onPress={handlePayment}
                         disabled={paymentLoading}
                         icon={
@@ -370,6 +382,7 @@ export default function BookingStep3() {
                 paymentId={paymentId}
                 amount={payAmount}
                 serviceType={currentType}
+                isCash={paymentMode === 'cash'}
                 onDone={handlePaymentDone}
             />
         </View>
@@ -388,8 +401,8 @@ const styles = StyleSheet.create({
     },
     backButton: {
         position: 'absolute',
-        top: 12,
-        left: 12,
+        top: 50,
+        left: 16,
         width: 40,
         height: 40,
         borderRadius: 20,
@@ -447,7 +460,7 @@ const styles = StyleSheet.create({
     },
     sheetContent: {
         paddingHorizontal: Spacing.xl,
-        paddingTop: Spacing.md,
+        paddingTop: Spacing.xl,
     },
     // Summary
     summaryHeader: {
@@ -593,6 +606,13 @@ const styles = StyleSheet.create({
         gap: 6,
         marginBottom: 10,
     },
+    paymentMethodHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 16,
+        marginBottom: 10,
+    },
     fareTitle: {
         fontSize: FontSizes.sm,
         fontFamily: 'Inter_700Bold',
@@ -664,6 +684,11 @@ const styles = StyleSheet.create({
     },
     tollPillLabelActive: {
         color: Colors.white,
+    },
+    tollPillSubtext: {
+        fontSize: FontSizes.xs,
+        color: Colors.textSubLight,
+        marginTop: 2,
     },
     tollPillAmount: {
         fontSize: FontSizes.lg,

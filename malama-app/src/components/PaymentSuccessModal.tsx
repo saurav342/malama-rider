@@ -95,6 +95,7 @@ interface PaymentSuccessModalProps {
     paymentId?: string;
     amount: number;
     serviceType: string;
+    isCash?: boolean;
     onDone: () => void;
 }
 
@@ -103,6 +104,7 @@ export function PaymentSuccessModal({
     paymentId,
     amount,
     serviceType,
+    isCash,
     onDone,
 }: PaymentSuccessModalProps) {
     const checkScale = useSharedValue(0);
@@ -163,7 +165,7 @@ export function PaymentSuccessModal({
                         entering={FadeInDown.delay(300).springify()}
                         style={styles.successTitle}
                     >
-                        Payment Successful! 🎉
+                        {isCash ? 'Booking Confirmed! 🎉' : 'Payment Successful! 🎉'}
                     </Animated.Text>
 
                     <Animated.Text
@@ -179,7 +181,7 @@ export function PaymentSuccessModal({
                         style={styles.detailsCard}
                     >
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Amount Paid</Text>
+                            <Text style={styles.detailLabel}>Amount {isCash ? 'Payable' : 'Paid'}</Text>
                             <Text style={styles.detailValue}>₹ {amount}</Text>
                         </View>
                         <View style={styles.detailDivider} />
@@ -189,7 +191,7 @@ export function PaymentSuccessModal({
                                 {serviceType === 'drop' ? 'City → Airport' : 'Airport → City'}
                             </Text>
                         </View>
-                        {paymentId && (
+                        {(!isCash && paymentId) && (
                             <>
                                 <View style={styles.detailDivider} />
                                 <View style={styles.detailRow}>
@@ -197,6 +199,15 @@ export function PaymentSuccessModal({
                                     <Text style={[styles.detailValue, styles.paymentId]}>
                                         {paymentId}
                                     </Text>
+                                </View>
+                            </>
+                        )}
+                        {isCash && (
+                            <>
+                                <View style={styles.detailDivider} />
+                                <View style={styles.detailRow}>
+                                    <Text style={styles.detailLabel}>Payment Method</Text>
+                                    <Text style={styles.detailValue}>Cash to Driver</Text>
                                 </View>
                             </>
                         )}
