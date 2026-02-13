@@ -55,10 +55,7 @@ export default function RootLayout() {
           name="booking/step1"
           options={{ animation: 'slide_from_right' }}
         />
-        <Stack.Screen
-          name="booking/step2"
-          options={{ animation: 'slide_from_right' }}
-        />
+
         <Stack.Screen
           name="booking/step3"
           options={{ animation: 'slide_from_right' }}

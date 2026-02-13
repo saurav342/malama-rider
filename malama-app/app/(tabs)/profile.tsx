@@ -57,11 +57,11 @@ export default function ProfileScreen() {
                         </View>
                     </View>
                     <View style={styles.nameRow}>
-                        <Text style={styles.profileName}>—</Text>
+                        <Text style={styles.profileName}>Arjun Mehta</Text>
                     </View>
                     <View style={styles.co2Badge}>
                         <MaterialIcons name="eco" size={14} color={Colors.accent} />
-                        <Text style={styles.co2Text}>0kg CO2 Saved</Text>
+                        <Text style={styles.co2Text}>12.6kg CO2 Saved</Text>
                     </View>
                 </View>
             </View>
@@ -78,14 +78,14 @@ export default function ProfileScreen() {
                     <SettingsRow
                         icon="person"
                         label="Full Name"
-                        value="—"
+                        value="Arjun Mehta"
                         trailing="edit"
                         onPress={() => { }}
                     />
                     <SettingsRow
                         icon="email"
                         label="Email"
-                        value="—"
+                        value="arjun.mehta@gmail.com"
                         trailing="lock"
                         iconBgColor="#F3F4F6"
                         iconColor={Colors.textSubLight}
@@ -93,7 +93,7 @@ export default function ProfileScreen() {
                     <SettingsRow
                         icon="phone"
                         label="Phone"
-                        value="—"
+                        value="+91 98451 23456"
                         trailing="edit"
                         onPress={() => { }}
                         style={{ borderBottomWidth: 0 }}

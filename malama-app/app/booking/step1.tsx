@@ -7,7 +7,6 @@ import {
     ScrollView,
     Platform,
     ActivityIndicator,
-    KeyboardAvoidingView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -15,10 +14,8 @@ import * as Location from 'expo-location';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Colors, BorderRadius, FontSizes, Spacing, Shadows } from '../../constants/Theme';
 import { GoogleMap } from '../../src/components/GoogleMap';
-import { PlacesAutocomplete } from '../../src/components/PlacesAutocomplete';
+import { LocationSearchModal } from '../../src/components/LocationSearchModal';
 import { Button } from '../../src/components/Button';
-import { Stepper } from '../../src/components/Stepper';
-import { DropdownProvider } from '../../src/context/DropdownContext';
 
 /**
  * Rounds a Date object up to the next 15-minute interval.
@@ -68,6 +65,7 @@ export default function BookingStep1() {
     const [mapCenter, setMapCenter] = useState({ lat: 12.9716, lng: 77.5946 });
     const [locationLoading, setLocationLoading] = useState(true);
     const [currentLocationName, setCurrentLocationName] = useState('Current Location');
+    const [currentLocationCoords, setCurrentLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
 
     // ── Terminal state ──
     const [terminal, setTerminal] = useState<'terminal1' | 'terminal2' | null>(null);
@@ -76,8 +74,11 @@ export default function BookingStep1() {
     const [pickupPlace, setPickupPlace] = useState<string>('');
     const [dropPlace, setDropPlace] = useState<string>('');
 
+    // ── Search modal state ──
+    const [searchModalVisible, setSearchModalVisible] = useState(false);
+    const [searchTarget, setSearchTarget] = useState<'pickup' | 'drop'>('pickup');
+
     // ── Date/Time state ──
-    // We get the rounded minimum date
     const minDate = getMinimumDate(4);
     const [selectedDate, setSelectedDate] = useState<Date>(minDate);
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -96,10 +97,12 @@ export default function BookingStep1() {
                 const loc = await Location.getCurrentPositionAsync({
                     accuracy: Location.Accuracy.Balanced,
                 });
-                setMapCenter({
+                const coords = {
                     lat: loc.coords.latitude,
                     lng: loc.coords.longitude,
-                });
+                };
+                setMapCenter(coords);
+                setCurrentLocationCoords(coords);
 
                 // Reverse geocode to get human-readable name
                 try {
@@ -111,7 +114,8 @@ export default function BookingStep1() {
                         const parts = [geo.name, geo.street, geo.city].filter(Boolean);
                         const name = parts.join(', ') || 'Current Location';
                         setCurrentLocationName(name);
-                        setPickupPlace(name);
+                        // Auto-fill the correct field based on initial service type
+                        setPickupPlace(name); // default is 'drop', so pickup = current location
                     }
                 } catch {
                     setPickupPlace('Current Location');
@@ -124,10 +128,40 @@ export default function BookingStep1() {
         })();
     }, []);
 
-    // Reset terminal when switching tabs
+    // ── Auto-fill the correct field when service type changes ──
     useEffect(() => {
         setTerminal(null);
+        if (currentLocationName && currentLocationName !== 'Current Location') {
+            if (serviceType === 'drop') {
+                // Airport Drop: going FROM current location TO airport
+                // Pickup = current location (auto-fill), drop = airport (via terminal)
+                setPickupPlace(currentLocationName);
+                setDropPlace('');
+            } else {
+                // Airport Pickup: going FROM airport TO current location 
+                // Pickup = airport (via terminal), drop = current location (auto-fill)
+                setDropPlace(currentLocationName);
+                setPickupPlace('');
+            }
+        }
     }, [serviceType]);
+
+    // ── Search modal handlers ──
+    const openSearch = (target: 'pickup' | 'drop') => {
+        setSearchTarget(target);
+        setSearchModalVisible(true);
+    };
+
+    const handleSearchSelect = (place: { name: string; latitude: number; longitude: number; address: string }) => {
+        setMapCenter({ lat: place.latitude, lng: place.longitude });
+        const displayName = place.address || place.name || '';
+        if (searchTarget === 'pickup') {
+            setPickupPlace(displayName);
+        } else {
+            setDropPlace(displayName);
+        }
+        setSearchModalVisible(false);
+    };
 
     // ── Picker handlers ──
     const onDateChange = (_event: DateTimePickerEvent, date?: Date) => {
@@ -135,10 +169,7 @@ export default function BookingStep1() {
         if (date) {
             const merged = new Date(selectedDate);
             merged.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-            // Re-check minimum constraint
             const min = getMinimumDate(4);
-            // If the merged date is before minimum, snap to minimum
-            // otherwise keep the merged date (which preserves time)
             if (merged < min) {
                 setSelectedDate(min);
             } else {
@@ -152,11 +183,7 @@ export default function BookingStep1() {
         if (date) {
             const merged = new Date(selectedDate);
             merged.setHours(date.getHours(), date.getMinutes(), 0, 0);
-
-            // Round to 15 mins if the native picker allows un-rounded input
-            // (iOS spinner with minuteInterval enforces it, but Android might not)
             const rounded = roundToNext15Minutes(merged);
-
             const min = getMinimumDate(4);
             if (rounded < min) {
                 setSelectedDate(min);
@@ -171,16 +198,49 @@ export default function BookingStep1() {
             serviceType,
             terminal: terminal || '',
             date: selectedDate.toISOString(),
+            pickupLocation: pickupPlace || currentLocationName,
+            dropLocation: dropPlace || '',
         });
-        if (serviceType === 'drop') {
-            params.set('pickupLocation', pickupPlace || currentLocationName);
-        } else {
-            params.set('dropLocation', dropPlace);
-        }
-        router.push(`/booking/step2?${params.toString()}`);
+        router.push(`/booking/step3?${params.toString()}`);
     };
 
-    // ── Terminal Selector Component ──
+    // ── Location display field ──  
+    const renderLocationField = (
+        label: string,
+        value: string,
+        target: 'pickup' | 'drop',
+        isAutoFilled: boolean
+    ) => (
+        <View style={styles.locationFieldContainer}>
+            <Text style={styles.fieldLabel}>{label}</Text>
+            <TouchableOpacity
+                style={[
+                    styles.locationField,
+                    isAutoFilled && styles.locationFieldAutoFilled,
+                ]}
+                onPress={() => openSearch(target)}
+                activeOpacity={0.7}
+            >
+                <MaterialIcons
+                    name={isAutoFilled ? 'my-location' : 'location-on'}
+                    size={20}
+                    color={isAutoFilled ? Colors.primary : Colors.textSubLight}
+                />
+                <Text
+                    style={[
+                        styles.locationFieldText,
+                        !value && styles.locationFieldPlaceholder,
+                    ]}
+                    numberOfLines={1}
+                >
+                    {value || `Search for ${label.toLowerCase()}`}
+                </Text>
+                <MaterialIcons name="chevron-right" size={20} color={Colors.textSubLight} />
+            </TouchableOpacity>
+        </View>
+    );
+
+    // ── Terminal Selector ──
     const renderTerminalSelector = () => (
         <View style={styles.terminalSection}>
             <Text style={styles.fieldLabel}>SELECT TERMINAL</Text>
@@ -241,204 +301,188 @@ export default function BookingStep1() {
     );
 
     return (
-        <DropdownProvider>
-            <View style={styles.container}>
-                {/* Map Background */}
-                <View style={styles.mapContainer}>
-                    {locationLoading ? (
-                        <View style={styles.mapLoading}>
-                            <ActivityIndicator size="large" color={Colors.primary} />
-                            <Text style={styles.mapLoadingText}>Getting your location…</Text>
+        <View style={styles.container}>
+            {/* Map Background */}
+            <View style={styles.mapContainer}>
+                {locationLoading ? (
+                    <View style={styles.mapLoading}>
+                        <ActivityIndicator size="large" color={Colors.primary} />
+                        <Text style={styles.mapLoadingText}>Getting your location…</Text>
+                    </View>
+                ) : (
+                    <GoogleMap
+                        latitude={mapCenter.lat}
+                        longitude={mapCenter.lng}
+                        zoom={13}
+                        showMarker={true}
+                        markerTitle="Pickup Location"
+                    />
+                )}
+
+                {/* Back Button */}
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => router.back()}
+                    activeOpacity={0.8}
+                >
+                    <MaterialIcons name="arrow-back" size={24} color={Colors.textMainLight} />
+                </TouchableOpacity>
+            </View>
+
+            {/* Bottom Sheet */}
+            <View style={styles.bottomSheet}>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <Text style={styles.title}>Plan Your Trip</Text>
+
+                    {/* Service Type Toggle */}
+                    <View style={styles.toggleContainer}>
+                        <TouchableOpacity
+                            style={[styles.toggleButton, serviceType === 'drop' && styles.toggleActive]}
+                            onPress={() => setServiceType('drop')}
+                        >
+                            <MaterialIcons
+                                name="flight-land"
+                                size={18}
+                                color={serviceType === 'drop' ? Colors.primary : Colors.textSubLight}
+                            />
+                            <Text
+                                style={[
+                                    styles.toggleText,
+                                    serviceType === 'drop' && styles.toggleTextActive,
+                                ]}
+                            >
+                                Airport Drop
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.toggleButton, serviceType === 'pickup' && styles.toggleActive]}
+                            onPress={() => setServiceType('pickup')}
+                        >
+                            <MaterialIcons
+                                name="flight-takeoff"
+                                size={18}
+                                color={serviceType === 'pickup' ? Colors.primary : Colors.textSubLight}
+                            />
+                            <Text
+                                style={[
+                                    styles.toggleText,
+                                    serviceType === 'pickup' && styles.toggleTextActive,
+                                ]}
+                            >
+                                Airport Pickup
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Date & Time */}
+                    <View style={styles.dateTimeRow}>
+                        <View style={styles.dateTimeCol}>
+                            <Text style={styles.fieldLabel}>DATE</Text>
+                            <TouchableOpacity
+                                style={styles.dateTimeInput}
+                                onPress={() => setShowDatePicker(true)}
+                            >
+                                <Text style={styles.dateTimeValue}>{formatDate(selectedDate)}</Text>
+                                <MaterialIcons name="calendar-today" size={16} color={Colors.textSubLight} />
+                            </TouchableOpacity>
                         </View>
+                        <View style={styles.dateTimeCol}>
+                            <Text style={styles.fieldLabel}>TIME</Text>
+                            <TouchableOpacity
+                                style={styles.dateTimeInput}
+                                onPress={() => setShowTimePicker(true)}
+                            >
+                                <Text style={styles.dateTimeValue}>{formatTime(selectedDate)}</Text>
+                                <MaterialIcons name="access-time" size={16} color={Colors.textSubLight} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    {/* Minimum notice hint */}
+                    <View style={styles.hintRow}>
+                        <MaterialIcons name="info-outline" size={14} color={Colors.primary} />
+                        <Text style={styles.hintText}>
+                            Bookings must be at least 4 hours in advance
+                        </Text>
+                    </View>
+
+                    {/* ═══════════════════════════════════════════════
+                        AIRPORT DROP:  Pickup Location (auto-filled) → Terminal
+                        AIRPORT PICKUP: Terminal → Drop Location (auto-filled)
+                    ═══════════════════════════════════════════════ */}
+
+                    {serviceType === 'drop' ? (
+                        <>
+                            {/* Pickup = current location (auto-filled) for Airport Drop */}
+                            {renderLocationField(
+                                'PICKUP LOCATION',
+                                pickupPlace,
+                                'pickup',
+                                pickupPlace === currentLocationName
+                            )}
+                            {renderTerminalSelector()}
+                        </>
                     ) : (
-                        <GoogleMap
-                            latitude={mapCenter.lat}
-                            longitude={mapCenter.lng}
-                            zoom={13}
-                            showMarker={true}
-                            markerTitle="Pickup Location"
-                        />
+                        <>
+                            {renderTerminalSelector()}
+                            {/* Drop = current location (auto-filled) for Airport Pickup */}
+                            {renderLocationField(
+                                'DROP LOCATION',
+                                dropPlace,
+                                'drop',
+                                dropPlace === currentLocationName
+                            )}
+                        </>
                     )}
 
-                    {/* Back Button */}
-                    <TouchableOpacity
-                        style={styles.backButton}
-                        onPress={() => router.back()}
-                        activeOpacity={0.8}
-                    >
-                        <MaterialIcons name="arrow-back" size={24} color={Colors.textMainLight} />
-                    </TouchableOpacity>
-
-                </View>
-
-                {/* Bottom Sheet */}
-                <View style={styles.bottomSheet}>
-                    <KeyboardAvoidingView
-                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
-                        style={{ width: '100%' }}
-                    >
-                        <ScrollView
-                            showsVerticalScrollIndicator={false}
-                            keyboardShouldPersistTaps="handled"
-                        >
-                            <Stepper currentStep={1} />
-
-                            <Text style={styles.title}>Plan Your Trip</Text>
-
-                            {/* Service Type Toggle */}
-                            <View style={styles.toggleContainer}>
-                                <TouchableOpacity
-                                    style={[styles.toggleButton, serviceType === 'drop' && styles.toggleActive]}
-                                    onPress={() => setServiceType('drop')}
-                                >
-                                    <MaterialIcons
-                                        name="flight-land"
-                                        size={18}
-                                        color={serviceType === 'drop' ? Colors.primary : Colors.textSubLight}
-                                    />
-                                    <Text
-                                        style={[
-                                            styles.toggleText,
-                                            serviceType === 'drop' && styles.toggleTextActive,
-                                        ]}
-                                    >
-                                        Airport Drop
-                                    </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.toggleButton, serviceType === 'pickup' && styles.toggleActive]}
-                                    onPress={() => setServiceType('pickup')}
-                                >
-                                    <MaterialIcons
-                                        name="flight-takeoff"
-                                        size={18}
-                                        color={serviceType === 'pickup' ? Colors.primary : Colors.textSubLight}
-                                    />
-                                    <Text
-                                        style={[
-                                            styles.toggleText,
-                                            serviceType === 'pickup' && styles.toggleTextActive,
-                                        ]}
-                                    >
-                                        Airport Pickup
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Date & Time */}
-                            <View style={styles.dateTimeRow}>
-                                <View style={styles.dateTimeCol}>
-                                    <Text style={styles.fieldLabel}>DATE</Text>
-                                    <TouchableOpacity
-                                        style={styles.dateTimeInput}
-                                        onPress={() => setShowDatePicker(true)}
-                                    >
-                                        <Text style={styles.dateTimeValue}>{formatDate(selectedDate)}</Text>
-                                        <MaterialIcons name="calendar-today" size={16} color={Colors.textSubLight} />
-                                    </TouchableOpacity>
-                                </View>
-                                <View style={styles.dateTimeCol}>
-                                    <Text style={styles.fieldLabel}>TIME</Text>
-                                    <TouchableOpacity
-                                        style={styles.dateTimeInput}
-                                        onPress={() => setShowTimePicker(true)}
-                                    >
-                                        <Text style={styles.dateTimeValue}>{formatTime(selectedDate)}</Text>
-                                        <MaterialIcons name="access-time" size={16} color={Colors.textSubLight} />
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-
-                            {/* Minimum notice hint */}
-                            <View style={styles.hintRow}>
-                                <MaterialIcons name="info-outline" size={14} color={Colors.primary} />
-                                <Text style={styles.hintText}>
-                                    Bookings must be at least 4 hours in advance
-                                </Text>
-                            </View>
-
-                            {/* ═══════════════════════════════════════════════
-                            AIRPORT DROP:  Pickup Location → Terminal
-                            AIRPORT PICKUP: Terminal → Drop Location
-                        ═══════════════════════════════════════════════ */}
-
-                            {serviceType === 'drop' ? (
-                                <>
-                                    {/* Pickup Location (Google autocomplete) */}
-                                    <View style={{ zIndex: 100 }}>
-                                        <PlacesAutocomplete
-                                            label="PICKUP LOCATION"
-                                            placeholder="Search for pickup location"
-                                            value={pickupPlace}
-                                            onSelect={(place) => {
-                                                setMapCenter({ lat: place.latitude, lng: place.longitude });
-                                                setPickupPlace(place.address || place.name || '');
-                                            }}
-                                        />
-                                    </View>
-
-
-
-                                    {/* Terminal Selector */}
-                                    {renderTerminalSelector()}
-                                </>
-                            ) : (
-                                <>
-                                    {/* Terminal Selector */}
-                                    {renderTerminalSelector()}
-
-                                    {/* Drop Location (Google autocomplete) */}
-                                    <View style={{ zIndex: 100 }}>
-                                        <PlacesAutocomplete
-                                            label="DROP LOCATION"
-                                            placeholder="Search for drop location"
-                                            value={dropPlace}
-                                            onSelect={(place) => {
-                                                setMapCenter({ lat: place.latitude, lng: place.longitude });
-                                                setDropPlace(place.address || place.name || '');
-                                            }}
-                                        />
-                                    </View>
-                                </>
-                            )}
-
-                            {/* Next Step */}
-                            <View style={[styles.nextButtonContainer, { zIndex: 1 }]}>
-                                <Button
-                                    title="Next Step"
-                                    onPress={handleNext}
-                                    icon={<MaterialIcons name="arrow-forward" size={18} color={Colors.white} />}
-                                />
-                            </View>
-                        </ScrollView>
-                    </KeyboardAvoidingView>
-                </View>
-
-                {/* Native Date Picker */}
-                {showDatePicker && (
-                    <DateTimePicker
-                        value={selectedDate}
-                        mode="date"
-                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                        minimumDate={getMinimumDate(4)}
-                        onChange={onDateChange}
-                    />
-                )}
-
-                {/* Native Time Picker */}
-                {showTimePicker && (
-                    <DateTimePicker
-                        value={selectedDate}
-                        mode="time"
-                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                        // Enforce 15-min intervals on iOS
-                        minuteInterval={15}
-                        onChange={onTimeChange}
-                    />
-                )}
+                    {/* Next Step */}
+                    <View style={[styles.nextButtonContainer, { zIndex: 1 }]}>
+                        <Button
+                            title="Next Step"
+                            onPress={handleNext}
+                            icon={<MaterialIcons name="arrow-forward" size={18} color={Colors.white} />}
+                        />
+                    </View>
+                </ScrollView>
             </View>
-        </DropdownProvider>
+
+            {/* Location Search Modal (Uber-like full screen) */}
+            <LocationSearchModal
+                visible={searchModalVisible}
+                onClose={() => setSearchModalVisible(false)}
+                onSelect={handleSearchSelect}
+                title={searchTarget === 'pickup' ? 'Pickup Location' : 'Drop Location'}
+                placeholder={searchTarget === 'pickup' ? 'Search pickup location' : 'Search drop location'}
+                initialValue={searchTarget === 'pickup' ? pickupPlace : dropPlace}
+                currentLocationName={currentLocationName}
+                currentLocationCoords={currentLocationCoords}
+            />
+
+            {/* Native Date Picker */}
+            {showDatePicker && (
+                <DateTimePicker
+                    value={selectedDate}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    minimumDate={getMinimumDate(4)}
+                    onChange={onDateChange}
+                />
+            )}
+
+            {/* Native Time Picker */}
+            {showTimePicker && (
+                <DateTimePicker
+                    value={selectedDate}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    minuteInterval={15}
+                    onChange={onTimeChange}
+                />
+            )}
+        </View>
     );
 }
 
@@ -478,7 +522,6 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter_500Medium',
         color: Colors.textSubLight,
     },
-
 
     // Bottom sheet
     bottomSheet: {
@@ -573,8 +616,34 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter_400Regular',
         color: Colors.primary,
     },
-    // Current location chip
-
+    // Location field (tappable, opens modal)
+    locationFieldContainer: {
+        marginBottom: Spacing.base,
+    },
+    locationField: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.white,
+        borderRadius: BorderRadius.md,
+        paddingVertical: 14,
+        paddingHorizontal: 14,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        gap: 10,
+    },
+    locationFieldAutoFilled: {
+        borderColor: Colors.primaryLight,
+        backgroundColor: '#F0FFF4',
+    },
+    locationFieldText: {
+        flex: 1,
+        fontSize: FontSizes.md,
+        fontFamily: 'Inter_500Medium',
+        color: Colors.textMainLight,
+    },
+    locationFieldPlaceholder: {
+        color: Colors.textSubLight,
+    },
     // Terminal selector
     terminalSection: {
         marginBottom: Spacing.base,

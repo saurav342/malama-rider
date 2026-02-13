@@ -39,19 +39,20 @@ export default function HomeScreen() {
           <View style={styles.welcomeStats}>
             <View style={styles.statItem}>
               <MaterialIcons name="eco" size={20} color={Colors.primary} />
-              <Text style={styles.statValue}>0kg</Text>
+
+              <Text style={styles.statValue}>12.6kg</Text>
               <Text style={styles.statLabel}>CO₂ Saved</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <MaterialIcons name="electric-car" size={20} color={Colors.primary} />
-              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statValue}>4</Text>
               <Text style={styles.statLabel}>EV Rides</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <MaterialIcons name="star" size={20} color="#FACC15" />
-              <Text style={styles.statValue}>—</Text>
+              <Text style={styles.statValue}>4.8</Text>
               <Text style={styles.statLabel}>Rating</Text>
             </View>
           </View>

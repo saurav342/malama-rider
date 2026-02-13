@@ -21,7 +21,6 @@ import Animated, {
 import { Colors, BorderRadius, FontSizes, Spacing, Shadows } from '../../constants/Theme';
 import { GoogleMap } from '../../src/components/GoogleMap';
 import { Button } from '../../src/components/Button';
-import { Stepper } from '../../src/components/Stepper';
 import { ToggleSwitch } from '../../src/components/ToggleSwitch';
 import { faresByServiceType } from '../../src/data/constants';
 import { openPayment } from '../../src/components/RazorpayCheckout';
@@ -35,9 +34,6 @@ export default function BookingStep3() {
         pickupLocation?: string;
         dropLocation?: string;
         date?: string;
-        name?: string;
-        whatsapp?: string;
-        email?: string;
     }>();
     const [returnTrip, setReturnTrip] = useState(false);
     const [specialReq, setSpecialReq] = useState('');
@@ -77,9 +73,9 @@ export default function BookingStep3() {
                 name: 'Malama Cabs',
                 description: `${serviceLabel} — ${tollOption === 'with' ? 'With Toll' : 'Without Toll'}`,
                 prefill: {
-                    name: params.name || '',
-                    contact: params.whatsapp || '',
-                    email: params.email || '',
+                    name: '',
+                    contact: '',
+                    email: '',
                 },
             });
 
@@ -142,8 +138,6 @@ export default function BookingStep3() {
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.sheetContent}
                 >
-                    <Stepper currentStep={3} />
-
                     {/* Service Type Badge */}
                     <Animated.View
                         entering={FadeInDown.delay(100).springify()}
@@ -171,7 +165,7 @@ export default function BookingStep3() {
                         style={styles.summaryCard}
                     >
                         {/* Passenger Info */}
-                        <View style={styles.passengerRow}>
+                        {/* <View style={styles.passengerRow}>
                             <View style={styles.passengerAvatar}>
                                 <MaterialIcons name="person" size={24} color={Colors.primary} />
                             </View>
@@ -182,7 +176,7 @@ export default function BookingStep3() {
                             <View style={styles.statusBadge}>
                                 <Text style={styles.statusText}>Pending</Text>
                             </View>
-                        </View>
+                        </View> */}
 
                         {/* Route Timeline */}
                         <View style={styles.routeTimeline}>
@@ -293,6 +287,70 @@ export default function BookingStep3() {
                                         ]}>₹ {fares.find(f => f.label === 'With Toll')?.amount ?? '—'}</Text>
                                     </View>
                                     {tollOption === 'with' && (
+                                        <MaterialIcons name="check" size={16} color={Colors.white} />
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* ── Payment Method Selection ── */}
+                            <View style={styles.paymentMethodHeader}>
+                                <MaterialIcons name="account-balance-wallet" size={16} color={Colors.primary} />
+                                <Text style={styles.fareTitle}>PAYMENT METHOD</Text>
+                            </View>
+
+                            <View style={styles.tollToggleRow}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.tollPill,
+                                        paymentMode === 'online' && styles.tollPillActive,
+                                    ]}
+                                    onPress={() => setPaymentMode('online')}
+                                    activeOpacity={0.7}
+                                >
+                                    <MaterialIcons
+                                        name="credit-card"
+                                        size={18}
+                                        color={paymentMode === 'online' ? Colors.white : Colors.primaryLight}
+                                    />
+                                    <View style={styles.tollPillContent}>
+                                        <Text style={[
+                                            styles.tollPillLabel,
+                                            paymentMode === 'online' && styles.tollPillLabelActive,
+                                        ]}>Online Pay</Text>
+                                        <Text style={[
+                                            styles.tollPillSubtext,
+                                            paymentMode === 'online' && { color: 'rgba(255,255,255,0.7)' },
+                                        ]}>UPI / Cards / Netbanking</Text>
+                                    </View>
+                                    {paymentMode === 'online' && (
+                                        <MaterialIcons name="check" size={16} color={Colors.white} />
+                                    )}
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[
+                                        styles.tollPill,
+                                        paymentMode === 'cash' && styles.tollPillActiveOrange,
+                                    ]}
+                                    onPress={() => setPaymentMode('cash')}
+                                    activeOpacity={0.7}
+                                >
+                                    <MaterialIcons
+                                        name="payments"
+                                        size={18}
+                                        color={paymentMode === 'cash' ? Colors.white : '#F59E0B'}
+                                    />
+                                    <View style={styles.tollPillContent}>
+                                        <Text style={[
+                                            styles.tollPillLabel,
+                                            paymentMode === 'cash' && styles.tollPillLabelActive,
+                                        ]}>Cash to Driver</Text>
+                                        <Text style={[
+                                            styles.tollPillSubtext,
+                                            paymentMode === 'cash' && { color: 'rgba(255,255,255,0.7)' },
+                                        ]}>Pay after ride</Text>
+                                    </View>
+                                    {paymentMode === 'cash' && (
                                         <MaterialIcons name="check" size={16} color={Colors.white} />
                                     )}
                                 </TouchableOpacity>

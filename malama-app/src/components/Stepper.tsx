@@ -10,7 +10,6 @@ interface StepInfo {
 
 const STEPS: StepInfo[] = [
     { label: 'Trip', icon: 'flight' },
-    { label: 'Details', icon: 'person' },
     { label: 'Confirm', icon: 'check-circle' },
 ];
 
