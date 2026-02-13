@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Settings and Profile - Malama Cabs</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#30e87a",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#112117",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2c22",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+        
+        /* iOS-like toggle switch style adjustments */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #30e87a;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #30e87a;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-100 min-h-screen flex flex-col items-center justify-center">
+<!-- Mobile Container -->
+<div class="w-full max-w-md h-screen max-h-[900px] bg-background-light dark:bg-background-dark flex flex-col relative overflow-hidden shadow-2xl">
+<!-- Header Section -->
+<header class="pt-12 pb-6 px-6 bg-surface-light dark:bg-surface-dark sticky top-0 z-20 shadow-sm border-b border-gray-100 dark:border-gray-800">
+<div class="flex items-center justify-between mb-6">
+<button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+<span class="material-icons-outlined text-gray-600 dark:text-gray-300">arrow_back_ios_new</span>
+</button>
+<h1 class="text-lg font-bold text-gray-900 dark:text-white">Settings</h1>
+<button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 transition-colors text-primary font-semibold text-sm">
+                    Save
+                </button>
+</div>
+<!-- Profile Overview -->
+<div class="flex flex-col items-center">
+<div class="relative mb-3 group cursor-pointer">
+<div class="w-24 h-24 rounded-full border-4 border-primary/20 p-1">
+<img alt="Profile Avatar" class="w-full h-full object-cover rounded-full" data-alt="Portrait of a smiling young man in a white t-shirt" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUPO-ctmfmDlMFFGRmCZPmVYLKc26558zWeuleAgPxM1prRJJ7N9od0-UvtZeMj_zTY_H59IA-FxBwZWNXfGV3KRdJfrwulGOhz_ZzeJtCvZuCbxVz_XyTWFycIId9dIpA0nfNErO5zr_29QOnXhuvPc9q3EWAfzho5Jdx6z4AeB_3vD7XBOjUfZlSXyw_ynuzKTB4moBIHEeCZZwt-4W3jaSiJqTBNglkCKVqrvyHU0-R3l-02VJBR4j6Xk5mFuSh57kSEbB8Dg"/>
+</div>
+<div class="absolute bottom-1 right-1 bg-primary text-white p-1.5 rounded-full shadow-lg border-2 border-surface-light dark:border-surface-dark">
+<span class="material-icons-outlined text-sm">edit</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<h2 class="text-xl font-bold text-gray-900 dark:text-white">Alex Johnson</h2>
+<span class="material-icons-outlined text-primary text-lg" title="Verified">verified</span>
+</div>
+<!-- EV Impact Stat -->
+<div class="mt-2 flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full">
+<span class="material-icons-outlined text-primary text-sm">eco</span>
+<span class="text-xs font-semibold text-primary-dark dark:text-primary">45kg CO2 Saved</span>
+</div>
+</div>
+</header>
+<!-- Scrollable Content -->
+<main class="flex-1 overflow-y-auto px-5 py-6 space-y-6 pb-24">
+<!-- Section: Personal Information -->
+<section>
+<h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Personal Information</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+<!-- Name Field -->
+<div class="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons-outlined text-lg">person</span>
+</div>
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400">Full Name</p>
+<p class="text-sm font-medium text-gray-900 dark:text-white">Alex Johnson</p>
+</div>
+</div>
+<span class="material-icons-outlined text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors text-lg">edit</span>
+</div>
+<!-- Email Field (Locked) -->
+<div class="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-400">
+<span class="material-icons-outlined text-lg">email</span>
+</div>
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400">Email</p>
+<p class="text-sm font-medium text-gray-500 dark:text-gray-400">alex.j@example.com</p>
+</div>
+</div>
+<span class="material-icons-outlined text-gray-300 text-lg">lock</span>
+</div>
+<!-- Phone Field -->
+<div class="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons-outlined text-lg">phone</span>
+</div>
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400">Phone</p>
+<p class="text-sm font-medium text-gray-900 dark:text-white">+1 (555) 012-3456</p>
+</div>
+</div>
+<span class="material-icons-outlined text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors text-lg">edit</span>
+</div>
+</div>
+</section>
+<!-- Section: Account Settings -->
+<section>
+<h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Account Settings</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden divide-y divide-gray-100 dark:divide-gray-800">
+<!-- Change Password -->
+<button class="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons-outlined text-lg">lock_reset</span>
+</div>
+<span class="text-sm font-medium text-gray-900 dark:text-white">Change Password</span>
+</div>
+<span class="material-icons-outlined text-gray-400 text-lg">chevron_right</span>
+</button>
+<!-- Notifications Toggle -->
+<div class="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons-outlined text-lg">notifications</span>
+</div>
+<span class="text-sm font-medium text-gray-900 dark:text-white">Push Notifications</span>
+</div>
+<!-- Toggle Switch -->
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 checked:right-0 checked:border-primary transition-all duration-300" id="toggle-notif" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer checked:bg-primary transition-colors duration-300" for="toggle-notif"></label>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: App Settings -->
+<section>
+<h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">App Settings</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden divide-y divide-gray-100 dark:divide-gray-800">
+<!-- Language -->
+<button class="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons-outlined text-lg">language</span>
+</div>
+<span class="text-sm font-medium text-gray-900 dark:text-white">Language</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-sm text-gray-500">English</span>
+<span class="material-icons-outlined text-gray-400 text-lg">chevron_right</span>
+</div>
+</button>
+<!-- Dark Mode Toggle -->
+<div class="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons-outlined text-lg">dark_mode</span>
+</div>
+<span class="text-sm font-medium text-gray-900 dark:text-white">Dark Mode</span>
+</div>
+<!-- Toggle Switch -->
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 checked:right-0 checked:border-primary transition-all duration-300" id="toggle-dark" name="toggle-dark" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer checked:bg-primary transition-colors duration-300" for="toggle-dark"></label>
+</div>
+</div>
+</div>
+</section>
+<!-- Logout & Version -->
+<div class="pt-6 pb-2 text-center">
+<button class="w-full bg-white dark:bg-surface-dark border border-red-100 dark:border-red-900/30 text-red-500 font-semibold py-3.5 px-4 rounded-xl shadow-sm hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2">
+<span class="material-icons-outlined text-lg">logout</span>
+                    Logout
+                </button>
+<p class="mt-4 text-xs text-gray-400">Malama Cabs v1.0.2</p>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="bg-surface-light dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800 px-6 py-3 absolute bottom-0 w-full z-30">
+<ul class="flex justify-between items-center">
+<li class="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer transition-colors w-16">
+<span class="material-icons-outlined text-2xl">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</li>
+<li class="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer transition-colors w-16">
+<span class="material-icons-outlined text-2xl">electric_car</span>
+<span class="text-[10px] font-medium">Bookings</span>
+</li>
+<li class="flex flex-col items-center gap-1 text-primary cursor-pointer w-16">
+<span class="material-icons-outlined text-2xl">person</span>
+<span class="text-[10px] font-bold">Profile</span>
+</li>
+</ul>
+<!-- Safe Area Spacer for iOS Home Indicator -->
+<div class="h-4 w-full"></div>
+</nav>
+</div>
+</body></html>

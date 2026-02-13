@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Malama EV Cabs Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#2E7D32", // Forest green from logo/screenshots
+              "primary-dark": "#1B5E20",
+              "background-light": "#FFFFFF",
+              "background-dark": "#121212",
+              "surface-light": "#F3F4F6", // Gray-100 for input backgrounds
+              "surface-dark": "#27272a", // Zinc-800 for dark mode inputs
+              "text-main-light": "#111827",
+              "text-main-dark": "#F9FAFB",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+              body: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              "xl": "1rem", 
+              "2xl": "1.5rem",
+            },
+          },
+        },
+      };
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark font-body min-h-screen flex flex-col justify-center items-center p-6 antialiased selection:bg-primary selection:text-white">
+<div class="w-full max-w-sm mx-auto flex flex-col items-center">
+<div class="mb-12 flex flex-col items-center">
+<div class="mb-2 relative">
+<div class="text-primary text-6xl font-bold flex flex-col items-center leading-none">
+<span class="material-icons text-[64px] text-primary">eco</span>
+<span class="-mt-4 text-5xl font-extrabold tracking-tight">M</span>
+</div>
+</div>
+<h1 class="text-4xl font-extrabold text-primary tracking-tight text-center mb-1">
+                MALAMA
+            </h1>
+<h2 class="text-2xl font-bold text-primary tracking-wide text-center">
+                EV CABS
+            </h2>
+</div>
+<form class="w-full space-y-4">
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-icons text-gray-500 dark:text-gray-400 text-sm">flag</span>
+</div>
+<select class="block w-full pl-10 pr-10 py-3.5 bg-surface-light dark:bg-surface-dark border-none rounded-lg text-gray-900 dark:text-gray-100 font-medium focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-zinc-800 transition-colors cursor-pointer appearance-none">
+<option selected="" value="+91">India (+91)</option>
+<option value="+1">USA (+1)</option>
+<option value="+44">UK (+44)</option>
+</select>
+<div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+<span class="material-icons text-gray-500 dark:text-gray-400">expand_more</span>
+</div>
+</div>
+<div class="relative">
+<label class="sr-only" for="contact">Mobile Number Or Email</label>
+<input class="block w-full px-4 py-3.5 bg-surface-light dark:bg-surface-dark border-none rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-zinc-800 transition-colors" id="contact" placeholder="Mobile Number Or Email" type="text"/>
+</div>
+<button class="w-full py-3.5 px-4 mt-6 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all transform active:scale-[0.98] flex items-center justify-center uppercase tracking-wide text-sm sm:text-base" type="button">
+                Sign In With OTP
+            </button>
+</form>
+<div class="mt-8 flex justify-between w-full px-2">
+<a class="text-gray-600 dark:text-gray-400 font-semibold hover:text-primary dark:hover:text-primary transition-colors text-sm sm:text-base" href="#">
+                Register User?
+            </a>
+<a class="text-gray-600 dark:text-gray-400 font-semibold hover:text-primary dark:hover:text-primary transition-colors text-sm sm:text-base" href="#">
+                Privacy Policy
+            </a>
+</div>
+</div>
+<div class="fixed bottom-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-20"></div>
+
+</body></html>
