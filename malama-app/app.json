@@ -4,35 +4,59 @@
     "slug": "malama-ev-cabs",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo1024x1024.png",
     "scheme": "malamacabs",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/logo1024x1024.png",
       "resizeMode": "contain",
       "backgroundColor": "#2E7D32"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.malama.evcabs"
+      "bundleIdentifier": "com.malama.evcabs",
+      "config": {
+        "googleMapsApiKey": "AIzaSyD9lLzMusVT5Jzn6KV9hOMv0HFaCtE6nQs"
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Malama Cabs needs your location to show nearby pickup points and provide accurate ride estimates.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Malama Cabs needs your location to show nearby pickup points and provide accurate ride estimates."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logo1024x1024.png",
         "backgroundColor": "#2E7D32"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.malama.evcabs"
+      "package": "com.malama.evcabs",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyD9lLzMusVT5Jzn6KV9hOMv0HFaCtE6nQs"
+        }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo1024x1024.png"
     },
     "plugins": [
       "expo-router",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Malama Cabs needs your location to show nearby pickup points and provide accurate ride estimates.",
+          "locationWhenInUsePermission": "Malama Cabs needs your location to show nearby pickup points.",
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

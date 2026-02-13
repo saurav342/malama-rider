@@ -6,42 +6,38 @@ import {
     TouchableOpacity,
     ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, BorderRadius, FontSizes, Spacing, Shadows } from '../../constants/Theme';
+import { GoogleMap } from '../../src/components/GoogleMap';
 import { Button } from '../../src/components/Button';
 import { Stepper } from '../../src/components/Stepper';
 import { TextInput } from '../../src/components/TextInput';
-import { defaultBooking } from '../../src/data/mockData';
 
 export default function BookingStep2() {
     const router = useRouter();
-    const [name, setName] = useState(defaultBooking.passengerName);
-    const [whatsapp, setWhatsapp] = useState(defaultBooking.whatsappNumber);
+    const params = useLocalSearchParams<{
+        serviceType?: string;
+        terminal?: string;
+        pickupLocation?: string;
+        dropLocation?: string;
+        date?: string;
+    }>();
+    const serviceType = params.serviceType || 'drop';
+    const [name, setName] = useState('');
+    const [whatsapp, setWhatsapp] = useState('');
     const [email, setEmail] = useState('');
 
     return (
         <View style={styles.container}>
             {/* Background */}
             <View style={styles.background}>
-                {/* Gradient placeholder for background image */}
-                <View style={styles.bgGradient} />
-                {/* Map pin overlay */}
-                <SafeAreaView style={styles.headerOverlay}>
-                    <TouchableOpacity
-                        style={styles.backButton}
-                        onPress={() => router.back()}
-                    >
-                        <MaterialIcons name="arrow-back" size={24} color={Colors.textMainLight} />
-                    </TouchableOpacity>
-                    <View style={styles.brandPill}>
-                        <View style={styles.brandLogoSmall}>
-                            <MaterialIcons name="eco" size={18} color={Colors.white} />
-                        </View>
-                        <Text style={styles.brandText}>MALAMA</Text>
-                    </View>
-                </SafeAreaView>
+                <GoogleMap
+                    latitude={13.1986}
+                    longitude={77.7066}
+                    zoom={14}
+                />
+
                 {/* Airport Pin */}
                 <View style={styles.pinContainer}>
                     <View style={styles.pinLabel}>
@@ -53,7 +49,7 @@ export default function BookingStep2() {
 
             {/* Bottom Sheet */}
             <View style={styles.bottomSheet}>
-                <View style={styles.dragHandle} />
+
                 <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.sheetContent}
@@ -117,7 +113,19 @@ export default function BookingStep2() {
                         />
                         <Button
                             title="Next Step"
-                            onPress={() => router.push('/booking/step3')}
+                            onPress={() => {
+                                const fwd = new URLSearchParams({
+                                    serviceType,
+                                    terminal: params.terminal || '',
+                                    pickupLocation: params.pickupLocation || '',
+                                    dropLocation: params.dropLocation || '',
+                                    date: params.date || '',
+                                    name,
+                                    whatsapp,
+                                    email,
+                                });
+                                router.push(`/booking/step3?${fwd.toString()}`);
+                            }}
                             icon={<MaterialIcons name="arrow-forward" size={18} color={Colors.white} />}
                             fullWidth={false}
                             style={styles.nextBtn}
@@ -145,49 +153,8 @@ const styles = StyleSheet.create({
         flex: 0.35,
         position: 'relative',
     },
-    bgGradient: {
-        flex: 1,
-        backgroundColor: '#F4DEB3',
-    },
-    headerOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: Spacing.base,
-        paddingTop: Spacing.sm,
-    },
-    backButton: {
-        backgroundColor: 'rgba(255,255,255,0.9)',
-        borderRadius: BorderRadius.full,
-        padding: 8,
-    },
-    brandPill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: 'rgba(255,255,255,0.9)',
-        borderRadius: BorderRadius.full,
-        paddingHorizontal: Spacing.base,
-        paddingVertical: 8,
-    },
-    brandLogoSmall: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: Colors.primary,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    brandText: {
-        fontFamily: 'Inter_700Bold',
-        fontSize: FontSizes.md,
-        color: Colors.primary,
-        letterSpacing: 0.5,
-    },
+
+
     pinContainer: {
         position: 'absolute',
         top: '40%',
@@ -216,15 +183,7 @@ const styles = StyleSheet.create({
         ...Shadows.bottomSheet,
         marginTop: -20,
     },
-    dragHandle: {
-        width: 48,
-        height: 5,
-        backgroundColor: '#D1D5DB',
-        borderRadius: 3,
-        alignSelf: 'center',
-        marginTop: Spacing.md,
-        opacity: 0.5,
-    },
+
     sheetContent: {
         paddingHorizontal: Spacing.xl,
         paddingTop: Spacing.md,

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
+    Image,
     StyleSheet,
     TouchableOpacity,
     ScrollView,
@@ -15,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, BorderRadius, FontSizes, Spacing, Shadows } from '../../constants/Theme';
 import { Button } from '../../src/components/Button';
 import { TextInput } from '../../src/components/TextInput';
-import { countryCodes } from '../../src/data/mockData';
+import { countryCodes } from '../../src/data/constants';
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -24,8 +25,8 @@ export default function LoginScreen() {
     const [showCountryPicker, setShowCountryPicker] = useState(false);
 
     const handleSignIn = () => {
-        // Phase 2: OTP verification
-        router.replace('/(tabs)');
+        if (!contact.trim()) return;
+        router.push({ pathname: '/(auth)/otp', params: { contact: `${selectedCountry.value} ${contact}` } });
     };
 
     return (
@@ -41,10 +42,11 @@ export default function LoginScreen() {
                 >
                     {/* Logo Section */}
                     <View style={styles.logoSection}>
-                        <View style={styles.logoIconContainer}>
-                            <MaterialIcons name="eco" size={64} color={Colors.primary} />
-                            <Text style={styles.logoM}>M</Text>
-                        </View>
+                        <Image
+                            source={require('../../assets/images/logo1024x1024.png')}
+                            style={styles.logoImage}
+                            resizeMode="contain"
+                        />
                         <Text style={styles.logoTitle}>MALAMA</Text>
                         <Text style={styles.logoSubtitle}>EV CABS</Text>
                     </View>
@@ -145,16 +147,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: Spacing.xxxl,
     },
-    logoIconContainer: {
-        alignItems: 'center',
+    logoImage: {
+        width: 120,
+        height: 120,
         marginBottom: Spacing.sm,
-    },
-    logoM: {
-        fontSize: 48,
-        fontFamily: 'Inter_800ExtraBold',
-        color: Colors.primary,
-        marginTop: -16,
-        letterSpacing: 2,
     },
     logoTitle: {
         fontSize: FontSizes.display,

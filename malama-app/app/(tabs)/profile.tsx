@@ -5,7 +5,6 @@ import {
     StyleSheet,
     TouchableOpacity,
     ScrollView,
-    Image,
     Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +13,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, BorderRadius, FontSizes, Spacing, Shadows } from '../../constants/Theme';
 import { SettingsRow } from '../../src/components/SettingsRow';
 import { ToggleSwitch } from '../../src/components/ToggleSwitch';
-import { mockUser } from '../../src/data/mockData';
 
 export default function ProfileScreen() {
     const router = useRouter();
@@ -50,24 +48,20 @@ export default function ProfileScreen() {
                 <View style={styles.profileSection}>
                     <View style={styles.avatarContainer}>
                         <View style={styles.avatarRing}>
-                            <Image
-                                source={{ uri: mockUser.avatarUrl }}
-                                style={styles.avatar}
-                            />
+                            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                                <MaterialIcons name="person" size={40} color={Colors.textSubLight} />
+                            </View>
                         </View>
                         <View style={styles.editBadge}>
                             <MaterialIcons name="edit" size={12} color={Colors.white} />
                         </View>
                     </View>
                     <View style={styles.nameRow}>
-                        <Text style={styles.profileName}>{mockUser.name}</Text>
-                        {mockUser.verified && (
-                            <MaterialIcons name="verified" size={20} color={Colors.accent} />
-                        )}
+                        <Text style={styles.profileName}>—</Text>
                     </View>
                     <View style={styles.co2Badge}>
                         <MaterialIcons name="eco" size={14} color={Colors.accent} />
-                        <Text style={styles.co2Text}>{mockUser.co2Saved} CO2 Saved</Text>
+                        <Text style={styles.co2Text}>0kg CO2 Saved</Text>
                     </View>
                 </View>
             </View>
@@ -84,14 +78,14 @@ export default function ProfileScreen() {
                     <SettingsRow
                         icon="person"
                         label="Full Name"
-                        value={mockUser.name}
+                        value="—"
                         trailing="edit"
                         onPress={() => { }}
                     />
                     <SettingsRow
                         icon="email"
                         label="Email"
-                        value={mockUser.email}
+                        value="—"
                         trailing="lock"
                         iconBgColor="#F3F4F6"
                         iconColor={Colors.textSubLight}
@@ -99,7 +93,7 @@ export default function ProfileScreen() {
                     <SettingsRow
                         icon="phone"
                         label="Phone"
-                        value={mockUser.phone}
+                        value="—"
                         trailing="edit"
                         onPress={() => { }}
                         style={{ borderBottomWidth: 0 }}
@@ -224,6 +218,11 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
         borderRadius: 44,
+    },
+    avatarPlaceholder: {
+        backgroundColor: '#F3F4F6',
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
     },
     editBadge: {
         position: 'absolute',

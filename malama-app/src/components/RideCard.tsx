@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, BorderRadius, FontSizes, Spacing, Shadows } from '../../constants/Theme';
-import { Ride } from '../data/mockData';
+import { Ride } from '../data/types';
 
 interface RideCardProps {
     ride: Ride;

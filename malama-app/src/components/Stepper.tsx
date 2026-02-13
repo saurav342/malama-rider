@@ -3,51 +3,68 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Theme';
 
+interface StepInfo {
+    label: string;
+    icon: keyof typeof MaterialIcons.glyphMap;
+}
+
+const STEPS: StepInfo[] = [
+    { label: 'Trip', icon: 'flight' },
+    { label: 'Details', icon: 'person' },
+    { label: 'Confirm', icon: 'check-circle' },
+];
+
 interface StepperProps {
     currentStep: number;
     totalSteps?: number;
 }
 
-export function Stepper({ currentStep, totalSteps = 3 }: StepperProps) {
-    const steps = Array.from({ length: totalSteps }, (_, i) => i + 1);
-
+export function Stepper({ currentStep }: StepperProps) {
     return (
         <View style={styles.container}>
-            {steps.map((step, index) => {
-                const isCompleted = step < currentStep;
-                const isActive = step === currentStep;
+            {STEPS.map((step, index) => {
+                const stepNum = index + 1;
+                const isCompleted = stepNum < currentStep;
+                const isActive = stepNum === currentStep;
 
                 return (
-                    <React.Fragment key={step}>
-                        {/* Step Circle */}
-                        <View
-                            style={[
-                                styles.circle,
-                                isCompleted && styles.circleCompleted,
-                                isActive && styles.circleActive,
-                                !isCompleted && !isActive && styles.circleInactive,
-                            ]}
-                        >
-                            {isCompleted ? (
-                                <MaterialIcons name="check" size={12} color={Colors.white} />
-                            ) : (
-                                <Text
-                                    style={[
-                                        styles.stepText,
-                                        (isActive || isCompleted) && styles.stepTextActive,
-                                    ]}
-                                >
-                                    {step}
-                                </Text>
-                            )}
+                    <React.Fragment key={stepNum}>
+                        <View style={styles.stepItem}>
+                            <View
+                                style={[
+                                    styles.iconCircle,
+                                    isCompleted && styles.iconCircleCompleted,
+                                    isActive && styles.iconCircleActive,
+                                    !isCompleted && !isActive && styles.iconCircleInactive,
+                                ]}
+                            >
+                                {isCompleted ? (
+                                    <MaterialIcons name="check" size={16} color={Colors.white} />
+                                ) : (
+                                    <MaterialIcons
+                                        name={step.icon}
+                                        size={16}
+                                        color={isActive ? Colors.white : '#9CA3AF'}
+                                    />
+                                )}
+                            </View>
+                            <Text
+                                style={[
+                                    styles.label,
+                                    isActive && styles.labelActive,
+                                    isCompleted && styles.labelCompleted,
+                                ]}
+                            >
+                                {step.label}
+                            </Text>
                         </View>
 
                         {/* Connector Line */}
-                        {index < steps.length - 1 && (
+                        {index < STEPS.length - 1 && (
                             <View
                                 style={[
                                     styles.connector,
-                                    step < currentStep && styles.connectorActive,
+                                    stepNum < currentStep && styles.connectorActive,
                                 ]}
                             />
                         )}
@@ -63,19 +80,24 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 20,
+        marginBottom: 16,
+        paddingHorizontal: 8,
     },
-    circle: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
+    stepItem: {
+        alignItems: 'center',
+        gap: 4,
+    },
+    iconCircle: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    circleCompleted: {
+    iconCircleCompleted: {
         backgroundColor: Colors.primary,
     },
-    circleActive: {
+    iconCircleActive: {
         backgroundColor: Colors.primary,
         shadowColor: Colors.primary,
         shadowOffset: { width: 0, height: 2 },
@@ -83,22 +105,28 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 4,
     },
-    circleInactive: {
+    iconCircleInactive: {
         backgroundColor: '#E5E7EB',
     },
-    stepText: {
-        fontSize: 12,
-        fontFamily: 'Inter_700Bold',
+    label: {
+        fontSize: 11,
+        fontFamily: 'Inter_500Medium',
         color: '#9CA3AF',
     },
-    stepTextActive: {
-        color: Colors.white,
+    labelActive: {
+        color: Colors.primary,
+        fontFamily: 'Inter_700Bold',
+    },
+    labelCompleted: {
+        color: Colors.primary,
+        fontFamily: 'Inter_600SemiBold',
     },
     connector: {
-        width: 40,
+        flex: 1,
         height: 2,
         backgroundColor: '#E5E7EB',
-        marginHorizontal: 4,
+        marginHorizontal: 6,
+        marginBottom: 16, // offset to align with circles, not labels
     },
     connectorActive: {
         backgroundColor: Colors.primary,

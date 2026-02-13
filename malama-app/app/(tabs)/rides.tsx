@@ -11,14 +11,16 @@ import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, BorderRadius, FontSizes, Spacing } from '../../constants/Theme';
 import { RideCard } from '../../src/components/RideCard';
-import { mockRides } from '../../src/data/mockData';
+import { Ride } from '../../src/data/types';
 
 export default function RidesScreen() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'history' | 'upcoming'>('history');
 
-    const thisMonthRides = mockRides.filter((r) => r.date.includes('Oct'));
-    const lastMonthRides = mockRides.filter((r) => r.date.includes('Sep'));
+    // TODO: Replace with API data
+    const rides: Ride[] = [];
+    const thisMonthRides = rides.filter((r) => r.date.includes('This'));
+    const lastMonthRides = rides.filter((r) => r.date.includes('Last'));
 
     return (
         <SafeAreaView style={styles.container}>

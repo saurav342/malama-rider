@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -6,66 +6,233 @@ import {
     TouchableOpacity,
     ScrollView,
     Platform,
+    ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Colors, BorderRadius, FontSizes, Spacing, Shadows } from '../../constants/Theme';
+import { GoogleMap } from '../../src/components/GoogleMap';
+import { PlacesAutocomplete } from '../../src/components/PlacesAutocomplete';
 import { Button } from '../../src/components/Button';
 import { Stepper } from '../../src/components/Stepper';
-import { TextInput } from '../../src/components/TextInput';
+
+/**
+ * Returns a Date object that is at least `minHoursAhead` hours from now.
+ */
+function getMinimumDate(minHoursAhead = 4): Date {
+    const d = new Date();
+    d.setHours(d.getHours() + minHoursAhead);
+    return d;
+}
+
+function formatDate(d: Date): string {
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${mm}/${dd}/${yyyy}`;
+}
+
+function formatTime(d: Date): string {
+    let hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+}
 
 export default function BookingStep1() {
     const router = useRouter();
     const [serviceType, setServiceType] = useState<'drop' | 'pickup'>('drop');
-    const [date, setDate] = useState('02/13/2026');
-    const [time, setTime] = useState('03:00 AM');
-    const [pickup, setPickup] = useState('Indiranagar, Bangalore');
+
+    // ── Location state ──
+    const [mapCenter, setMapCenter] = useState({ lat: 12.9716, lng: 77.5946 });
+    const [locationLoading, setLocationLoading] = useState(true);
+    const [currentLocationName, setCurrentLocationName] = useState('Current Location');
+
+    // ── Terminal state ──
+    const [terminal, setTerminal] = useState<'terminal1' | 'terminal2' | null>(null);
+
+    // ── Place state ──
+    const [pickupPlace, setPickupPlace] = useState<string>('');
+    const [dropPlace, setDropPlace] = useState<string>('');
+
+    // ── Date/Time state ──
+    const minDate = getMinimumDate(4);
+    const [selectedDate, setSelectedDate] = useState<Date>(minDate);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false);
+
+    // ── Fetch current location on mount ──
+    useEffect(() => {
+        (async () => {
+            try {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status !== 'granted') {
+                    console.warn('Location permission not granted');
+                    setLocationLoading(false);
+                    return;
+                }
+                const loc = await Location.getCurrentPositionAsync({
+                    accuracy: Location.Accuracy.Balanced,
+                });
+                setMapCenter({
+                    lat: loc.coords.latitude,
+                    lng: loc.coords.longitude,
+                });
+
+                // Reverse geocode to get human-readable name
+                try {
+                    const [geo] = await Location.reverseGeocodeAsync({
+                        latitude: loc.coords.latitude,
+                        longitude: loc.coords.longitude,
+                    });
+                    if (geo) {
+                        const parts = [geo.name, geo.street, geo.city].filter(Boolean);
+                        const name = parts.join(', ') || 'Current Location';
+                        setCurrentLocationName(name);
+                        setPickupPlace(name);
+                    }
+                } catch {
+                    setPickupPlace('Current Location');
+                }
+            } catch (err) {
+                console.warn('Failed to get location:', err);
+            } finally {
+                setLocationLoading(false);
+            }
+        })();
+    }, []);
+
+    // Reset terminal when switching tabs
+    useEffect(() => {
+        setTerminal(null);
+    }, [serviceType]);
+
+    // ── Picker handlers ──
+    const onDateChange = (_event: DateTimePickerEvent, date?: Date) => {
+        setShowDatePicker(false);
+        if (date) {
+            const merged = new Date(selectedDate);
+            merged.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+            const min = getMinimumDate(4);
+            setSelectedDate(merged < min ? min : merged);
+        }
+    };
+
+    const onTimeChange = (_event: DateTimePickerEvent, date?: Date) => {
+        setShowTimePicker(false);
+        if (date) {
+            const merged = new Date(selectedDate);
+            merged.setHours(date.getHours(), date.getMinutes(), 0, 0);
+            const min = getMinimumDate(4);
+            setSelectedDate(merged < min ? min : merged);
+        }
+    };
+
+    const handleNext = () => {
+        const params = new URLSearchParams({
+            serviceType,
+            terminal: terminal || '',
+            date: selectedDate.toISOString(),
+        });
+        if (serviceType === 'drop') {
+            params.set('pickupLocation', pickupPlace || currentLocationName);
+        } else {
+            params.set('dropLocation', dropPlace);
+        }
+        router.push(`/booking/step2?${params.toString()}`);
+    };
+
+    // ── Terminal Selector Component ──
+    const renderTerminalSelector = () => (
+        <View style={styles.terminalSection}>
+            <Text style={styles.fieldLabel}>SELECT TERMINAL</Text>
+            <View style={styles.terminalRow}>
+                <TouchableOpacity
+                    style={[
+                        styles.terminalPill,
+                        terminal === 'terminal1' && styles.terminalPillActive,
+                    ]}
+                    onPress={() => setTerminal('terminal1')}
+                    activeOpacity={0.7}
+                >
+                    <MaterialIcons
+                        name="flight"
+                        size={18}
+                        color={terminal === 'terminal1' ? Colors.white : Colors.textSubLight}
+                    />
+                    <Text
+                        style={[
+                            styles.terminalPillText,
+                            terminal === 'terminal1' && styles.terminalPillTextActive,
+                        ]}
+                    >
+                        Terminal 1
+                    </Text>
+                    {terminal === 'terminal1' && (
+                        <MaterialIcons name="check-circle" size={16} color={Colors.white} />
+                    )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[
+                        styles.terminalPill,
+                        terminal === 'terminal2' && styles.terminalPillActive,
+                    ]}
+                    onPress={() => setTerminal('terminal2')}
+                    activeOpacity={0.7}
+                >
+                    <MaterialIcons
+                        name="flight"
+                        size={18}
+                        color={terminal === 'terminal2' ? Colors.white : Colors.textSubLight}
+                    />
+                    <Text
+                        style={[
+                            styles.terminalPillText,
+                            terminal === 'terminal2' && styles.terminalPillTextActive,
+                        ]}
+                    >
+                        Terminal 2
+                    </Text>
+                    {terminal === 'terminal2' && (
+                        <MaterialIcons name="check-circle" size={16} color={Colors.white} />
+                    )}
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
 
     return (
         <View style={styles.container}>
-            {/* Map Background Placeholder */}
+            {/* Map Background */}
             <View style={styles.mapContainer}>
-                <View style={styles.mapPlaceholder}>
-                    <View style={styles.mapGrid}>
-                        {/* Simulated map grid lines */}
-                        {[...Array(8)].map((_, i) => (
-                            <View key={`h-${i}`} style={[styles.gridLineH, { top: `${(i + 1) * 12}%` }]} />
-                        ))}
-                        {[...Array(6)].map((_, i) => (
-                            <View key={`v-${i}`} style={[styles.gridLineV, { left: `${(i + 1) * 16}%` }]} />
-                        ))}
+                {locationLoading ? (
+                    <View style={styles.mapLoading}>
+                        <ActivityIndicator size="large" color={Colors.primary} />
+                        <Text style={styles.mapLoadingText}>Getting your location…</Text>
                     </View>
-                    {/* Location Marker */}
-                    <View style={styles.markerContainer}>
-                        <MaterialIcons name="location-on" size={48} color={Colors.primary} />
-                    </View>
-                    {/* Map labels */}
-                    <Text style={styles.mapLabel}>Bangalore</Text>
-                </View>
+                ) : (
+                    <GoogleMap
+                        latitude={mapCenter.lat}
+                        longitude={mapCenter.lng}
+                        zoom={13}
+                        showMarker={true}
+                        markerTitle="Pickup Location"
+                    />
+                )}
 
-                {/* Header Overlay */}
-                <SafeAreaView style={styles.headerOverlay}>
-                    <TouchableOpacity
-                        style={styles.headerButton}
-                        onPress={() => router.back()}
-                    >
-                        <MaterialIcons name="arrow-back" size={24} color={Colors.white} />
-                    </TouchableOpacity>
-                    <View style={styles.headerBrand}>
-                        <MaterialIcons name="eco" size={18} color={Colors.white} />
-                        <Text style={styles.headerTitle}>MALAMA CABS</Text>
-                    </View>
-                    <TouchableOpacity style={styles.headerButton}>
-                        <MaterialIcons name="menu" size={24} color={Colors.white} />
-                    </TouchableOpacity>
-                </SafeAreaView>
             </View>
 
             {/* Bottom Sheet */}
             <View style={styles.bottomSheet}>
-                <View style={styles.dragHandle} />
-                <ScrollView showsVerticalScrollIndicator={false}>
+
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
                     <Stepper currentStep={1} />
 
                     <Text style={styles.title}>Plan Your Trip</Text>
@@ -114,46 +281,121 @@ export default function BookingStep1() {
                     <View style={styles.dateTimeRow}>
                         <View style={styles.dateTimeCol}>
                             <Text style={styles.fieldLabel}>DATE</Text>
-                            <TouchableOpacity style={styles.dateTimeInput}>
-                                <Text style={styles.dateTimeValue}>{date}</Text>
+                            <TouchableOpacity
+                                style={styles.dateTimeInput}
+                                onPress={() => setShowDatePicker(true)}
+                            >
+                                <Text style={styles.dateTimeValue}>{formatDate(selectedDate)}</Text>
                                 <MaterialIcons name="calendar-today" size={16} color={Colors.textSubLight} />
                             </TouchableOpacity>
                         </View>
                         <View style={styles.dateTimeCol}>
                             <Text style={styles.fieldLabel}>TIME</Text>
-                            <TouchableOpacity style={styles.dateTimeInput}>
-                                <Text style={styles.dateTimeValue}>{time}</Text>
+                            <TouchableOpacity
+                                style={styles.dateTimeInput}
+                                onPress={() => setShowTimePicker(true)}
+                            >
+                                <Text style={styles.dateTimeValue}>{formatTime(selectedDate)}</Text>
                                 <MaterialIcons name="access-time" size={16} color={Colors.textSubLight} />
                             </TouchableOpacity>
                         </View>
                     </View>
 
-                    {/* Pickup Location */}
-                    <TextInput
-                        label="PICKUP LOCATION"
-                        placeholder="Search for a location"
-                        value={pickup}
-                        onChangeText={setPickup}
-                        leadingIcon={
-                            <MaterialIcons name="location-on" size={22} color={Colors.primary} />
-                        }
-                        trailingIcon={
-                            <TouchableOpacity style={styles.myLocationButton}>
-                                <MaterialIcons name="my-location" size={18} color={Colors.textSubLight} />
+                    {/* Minimum notice hint */}
+                    <View style={styles.hintRow}>
+                        <MaterialIcons name="info-outline" size={14} color={Colors.primary} />
+                        <Text style={styles.hintText}>
+                            Bookings must be at least 4 hours in advance
+                        </Text>
+                    </View>
+
+                    {/* ═══════════════════════════════════════════════
+                        AIRPORT DROP:  Pickup Location → Terminal
+                        AIRPORT PICKUP: Terminal → Drop Location
+                    ═══════════════════════════════════════════════ */}
+
+                    {serviceType === 'drop' ? (
+                        <>
+                            {/* Pickup Location (Google autocomplete) */}
+                            <View style={{ zIndex: 100 }}>
+                                <PlacesAutocomplete
+                                    label="PICKUP LOCATION"
+                                    placeholder="Search for pickup location"
+                                    onSelect={(place) => {
+                                        setMapCenter({ lat: place.latitude, lng: place.longitude });
+                                        setPickupPlace(place.address || place.name || '');
+                                    }}
+                                />
+                            </View>
+
+                            {/* Current location chip */}
+                            <TouchableOpacity
+                                style={styles.currentLocationChip}
+                                onPress={() => {
+                                    setPickupPlace(currentLocationName);
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <MaterialIcons name="my-location" size={16} color={Colors.primary} />
+                                <Text style={styles.currentLocationText} numberOfLines={1}>
+                                    {currentLocationName}
+                                </Text>
                             </TouchableOpacity>
-                        }
-                    />
+
+                            {/* Terminal Selector */}
+                            {renderTerminalSelector()}
+                        </>
+                    ) : (
+                        <>
+                            {/* Terminal Selector */}
+                            {renderTerminalSelector()}
+
+                            {/* Drop Location (Google autocomplete) */}
+                            <View style={{ zIndex: 100 }}>
+                                <PlacesAutocomplete
+                                    label="DROP LOCATION"
+                                    placeholder="Search for drop location"
+                                    onSelect={(place) => {
+                                        setMapCenter({ lat: place.latitude, lng: place.longitude });
+                                        setDropPlace(place.address || place.name || '');
+                                    }}
+                                />
+                            </View>
+                        </>
+                    )}
 
                     {/* Next Step */}
-                    <View style={styles.nextButtonContainer}>
+                    <View style={[styles.nextButtonContainer, { zIndex: 1 }]}>
                         <Button
                             title="Next Step"
-                            onPress={() => router.push('/booking/step2')}
+                            onPress={handleNext}
                             icon={<MaterialIcons name="arrow-forward" size={18} color={Colors.white} />}
                         />
                     </View>
                 </ScrollView>
             </View>
+
+            {/* Native Date Picker */}
+            {showDatePicker && (
+                <DateTimePicker
+                    value={selectedDate}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    minimumDate={getMinimumDate(4)}
+                    onChange={onDateChange}
+                />
+            )}
+
+            {/* Native Time Picker */}
+            {showTimePicker && (
+                <DateTimePicker
+                    value={selectedDate}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    minimumDate={getMinimumDate(4)}
+                    onChange={onTimeChange}
+                />
+            )}
         </View>
     );
 }
@@ -168,71 +410,20 @@ const styles = StyleSheet.create({
         flex: 1,
         position: 'relative',
     },
-    mapPlaceholder: {
+    mapLoading: {
         flex: 1,
-        backgroundColor: '#E8EDE9',
-        position: 'relative',
-        overflow: 'hidden',
-    },
-    mapGrid: {
-        ...StyleSheet.absoluteFillObject,
-    },
-    gridLineH: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        height: 1,
-        backgroundColor: '#D1D5DB',
-        opacity: 0.3,
-    },
-    gridLineV: {
-        position: 'absolute',
-        top: 0,
-        bottom: 0,
-        width: 1,
-        backgroundColor: '#D1D5DB',
-        opacity: 0.3,
-    },
-    markerContainer: {
-        position: 'absolute',
-        top: '40%',
-        left: '50%',
-        marginLeft: -24,
-        marginTop: -48,
-    },
-    mapLabel: {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        marginLeft: -30,
-        fontSize: FontSizes.sm,
-        fontFamily: 'Inter_600SemiBold',
-        color: Colors.textSubLight,
-        opacity: 0.5,
-    },
-    // Header overlay
-    headerOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-    },
-    headerButton: {
-        backgroundColor: 'rgba(0,0,0,0.2)',
-        borderRadius: BorderRadius.full,
-        padding: 8,
-    },
-    headerBrand: {
-        flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
+        justifyContent: 'center',
+        backgroundColor: '#E5E7EB',
+        gap: 12,
     },
-    headerTitle: {
-        fontSize: FontSizes.base,
-        fontFamily: 'Inter_700Bold',
-        color: Colors.white,
-        letterSpacing: 1,
+    mapLoadingText: {
+        fontSize: FontSizes.sm,
+        fontFamily: 'Inter_500Medium',
+        color: Colors.textSubLight,
     },
+
+
     // Bottom sheet
     bottomSheet: {
         backgroundColor: 'rgba(255,255,255,0.92)',
@@ -241,17 +432,9 @@ const styles = StyleSheet.create({
         ...Shadows.bottomSheet,
         paddingHorizontal: Spacing.xl,
         paddingBottom: Spacing.xl,
-        maxHeight: '60%',
+        maxHeight: '65%',
     },
-    dragHandle: {
-        width: 48,
-        height: 5,
-        backgroundColor: '#D1D5DB',
-        borderRadius: 3,
-        alignSelf: 'center',
-        marginVertical: Spacing.md,
-        opacity: 0.5,
-    },
+
     title: {
         fontSize: FontSizes.xl,
         fontFamily: 'Inter_700Bold',
@@ -291,7 +474,7 @@ const styles = StyleSheet.create({
     dateTimeRow: {
         flexDirection: 'row',
         gap: 12,
-        marginBottom: Spacing.base,
+        marginBottom: 8,
     },
     dateTimeCol: {
         flex: 1,
@@ -319,6 +502,73 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         fontFamily: 'Inter_500Medium',
         color: Colors.textMainLight,
+    },
+    // Hint
+    hintRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: Spacing.base,
+        paddingHorizontal: 2,
+    },
+    hintText: {
+        fontSize: FontSizes.xs,
+        fontFamily: 'Inter_400Regular',
+        color: Colors.primary,
+    },
+    // Current location chip
+    currentLocationChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: `${Colors.primary}12`,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: BorderRadius.full,
+        alignSelf: 'flex-start',
+        marginTop: 6,
+        marginBottom: Spacing.base,
+        borderWidth: 1,
+        borderColor: `${Colors.primary}30`,
+    },
+    currentLocationText: {
+        fontSize: FontSizes.sm,
+        fontFamily: 'Inter_500Medium',
+        color: Colors.primary,
+        maxWidth: 220,
+    },
+    // Terminal selector
+    terminalSection: {
+        marginBottom: Spacing.base,
+    },
+    terminalRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    terminalPill: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 14,
+        borderRadius: BorderRadius.md,
+        backgroundColor: '#F3F4F6',
+        borderWidth: 1.5,
+        borderColor: '#E5E7EB',
+    },
+    terminalPillActive: {
+        backgroundColor: Colors.primary,
+        borderColor: Colors.primary,
+        ...Shadows.card,
+    },
+    terminalPillText: {
+        fontSize: FontSizes.md,
+        fontFamily: 'Inter_600SemiBold',
+        color: Colors.textSubLight,
+    },
+    terminalPillTextActive: {
+        color: Colors.white,
     },
     // My location
     myLocationButton: {
